@@ -115,6 +115,60 @@ f是激活函数。这里将具体的函数留给后续章节。
   \label{fig:hir}
 \end{figure}
 
+具体的网络结构如图(\ref{fig:jiegou})所示。
+
+\begin{figure}
+  \centering
+  \includegraphics[height=5cm,width=10cm]{jiegou.png}
+  \caption{网络结构}
+  \label{fig:jiegou}
+\end{figure}
+
+\subsection{稀疏性}
+
+这里有两种稀疏性：
+\begin{enumerate}
+\item 结构本身带来的稀疏性，因为网络中大部分连接都是关闭的。在实验中，仅有2\%的参数是非0的。
+\item 第二种稀疏性在于文本的稀疏性，对于实验中，底层只有很小的一部分是有数值的。这是由于两个原因：
+  \begin{enumerate}
+  \item 平行文本通常很短
+  \item 我们就是这么设计的很稀疏的
+  \end{enumerate}
+  
+\end{enumerate}
+
+为了理解稀疏性，下面给出一个定义：
+
+\paragraph{定义}
+
+输入对$(x,y)$有重合块p，当且仅当$x\cap p_x \neq \emptyset 和 y\cap p_y \neq \emptyset$，其中$p_x,p_y$分别是块p在领域$X,Y$的词索引。
+
+在定义重合函数：$\emph{overlap}((x,y),p) = ||p_x \cap x||_0 \cdot || p_y \cap y ||_0 $。提出的架构只允许有重合的部分可以是非0的。更确切的说就是：
+\begin{displaymath}
+  s_p (x,y) = a_p (x,y) \cdot \emph{overlap} ((x,y),p)
+\end{displaymath}
+$a_p(x,y)$是激励函数。这种限制对于back-propagation时的tuning非常有用：监督信号（supervision signal）只有在有重合的时候才会被得到。很明显的，如果监督信号在块p停止了，它也不会往下传递给p和p的孩子，即使他们的孩子有其他祖先。也就是说用随机梯度的时候，只需要更新少量节点即可，因而是非常有效率的。\footnote{在这里我的理解就是，因为p已经没有重合的节点了，其他祖先也不需要往这里传了。}
+
+\subsection{局部决策方法}
+
+在隐藏层p-layerI,p-layerII,c-layer，我们允许两种激励函数：
+\begin{enumerate}
+\item 线性（linear）:$f_{lin}(t) = x$
+\item sigmoid : $f_{sig} (t) = (1+e^{-t})^{-1}$
+\end{enumerate}
+
+在第一层，$(x,y)$的每一个块p有：$M_p = x_p y_p^{T}$；p中第k个局部决策有$a_p^{(k)}(x,y) = f_p^{(k)} (\sum_{n,m}A_{p,nm}^{(k)}M_{p,nm}+b_p^{(k)})$。其中A是权重，f是两种激励函数中的一种。进一步，有：
+\begin{displaymath}
+  a_p^{(k)}(x,y) = f_p^{(k)} (x_p^{T}L_{x,p}^{(k)}(L_{y,p}^{(k)})y_p+b_p^{(k)})
+\end{displaymath}
+
+如图(\ref{fig:jiegou})所示，L是隐藏的二维结构。在输入层之后，二维结构就没有了。也就替换成了，如图(\ref{fig:gongshi})所示的形式。
+\begin{figure}
+  \centering
+  \includegraphics[height=1cm,width=8cm]{gongshi.png}
+  \label{fig:gongshi}
+\end{figure}
+其中$\Phi$是前面所定义的$s_p$。
 
 
 
